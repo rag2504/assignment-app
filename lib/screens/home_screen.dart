@@ -38,31 +38,45 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatCard("Total Orders", totalOrders.toString(), Icons.assignment, Colors.blue),
-            _buildStatCard("Total Revenue", "₹$totalRevenue", Icons.attach_money, Colors.green),
-            _buildStatCard("Pending Orders", pendingOrders.toString(), Icons.pending, Colors.red),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatCard("Total Orders", totalOrders.toString(), Icons.assignment, Colors.blue),
+              _buildStatCard("Total Revenue", "₹$totalRevenue", Icons.attach_money, Colors.green),
+              _buildStatCard("Pending Orders", pendingOrders.toString(), Icons.pending, Colors.red),
 
-            SizedBox(height: 20),
+              SizedBox(height: 20),
 
-            _buildActionButton("Add Customer", Icons.person_add, Colors.purple, () {
-              Navigator.pushNamed(context, '/addCustomer');
-            }),
+              _buildActionButton("Add Order", Icons.add_shopping_cart, Colors.purple, () {
+                Navigator.pushNamed(context, '/addOrder');
+              }),
 
-            SizedBox(height: 10),
+              SizedBox(height: 10),
 
-            _buildActionButton("Financial Details", Icons.bar_chart, Colors.orange, () {
-              Navigator.pushNamed(context, '/financialDetails');
-            }),
+              _buildActionButton("View Orders", Icons.view_list, Colors.blue, () {
+                Navigator.pushNamed(context, '/viewOrders');
+              }),
 
-            SizedBox(height: 10),
+              SizedBox(height: 10),
 
-            _buildActionButton("Writer Details", Icons.edit, Colors.teal, () {
-              Navigator.pushNamed(context, '/writerDetails');
-            }),
-          ],
+              _buildActionButton("Financial Details", Icons.bar_chart, Colors.orange, () {
+                Navigator.pushNamed(context, '/financialDetails');
+              }),
+
+              SizedBox(height: 10),
+
+              _buildActionButton("Writer Details", Icons.edit, Colors.teal, () {
+                Navigator.pushNamed(context, '/writerDetails');
+              }),
+
+              SizedBox(height: 10),
+
+              _buildActionButton("Add Customer", Icons.person_add, Colors.purple, () {
+                Navigator.pushNamed(context, '/addCustomer');
+              }),
+            ],
+          ),
         ),
       ),
     );
