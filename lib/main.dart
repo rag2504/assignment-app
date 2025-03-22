@@ -6,11 +6,11 @@ import 'screens/view_orders_screen.dart';
 void main() {
   runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, // Disable debug banner
       title: 'Assignment App',
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
@@ -19,7 +19,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/addOrder': (context) => AddOrderScreen(),
         '/viewOrders': (context) => ViewOrdersScreen(),
-        // Add other routes here if needed
       },
     );
   }
