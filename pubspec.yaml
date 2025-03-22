@@ -8,16 +8,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.2
   intl: ^0.18.0  # For date formatting
   sqflite: ^2.2.8+4  # For local database (SQLite)
   path_provider: ^2.1.2  # To get file system paths
+  fl_chart: ^0.36.0  # For charts and graphs
+  http: ^0.13.3  # For making network requests
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^2.0.0
 
 flutter:

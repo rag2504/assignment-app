@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'customer_stats_screen.dart'; // Import the new screen
+import 'reports_page.dart'; // Import ReportsPage
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -16,19 +18,39 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildActionButton("Add Order", Icons.add_shopping_cart, Colors.purple, () {
-              Navigator.pushNamed(context, '/addOrder');
-            }),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildActionButton("Add Order", Icons.add_shopping_cart, Colors.purple, () {
+                Navigator.pushNamed(context, '/addOrder');
+              }),
 
-            SizedBox(height: 10),
+              SizedBox(height: 10),
 
-            _buildActionButton("View Orders", Icons.view_list, Colors.blue, () {
-              Navigator.pushNamed(context, '/viewOrders');
-            }),
-          ],
+              _buildActionButton("View Orders", Icons.view_list, Colors.blue, () {
+                Navigator.pushNamed(context, '/viewOrders');
+              }),
+
+              SizedBox(height: 10),
+
+              _buildActionButton("Customer Stats", Icons.people, Colors.teal, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CustomerStatsScreen()),
+                );
+              }),
+
+              SizedBox(height: 10),
+
+              _buildActionButton("Reports", Icons.analytics, Colors.indigo, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ReportsPage()),
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );

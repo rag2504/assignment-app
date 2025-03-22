@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 
 class AddOrderScreen extends StatefulWidget {
   final Order? order;
+  final String? prefillName;
+  final String? prefillContact;
 
-  AddOrderScreen({this.order});
+  AddOrderScreen({this.order, this.prefillName, this.prefillContact});
 
   @override
   _AddOrderScreenState createState() => _AddOrderScreenState();
@@ -51,6 +53,13 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
     } else {
       // Set today's date as default for new orders
       _orderDateController.text = _dateFormat.format(DateTime.now());
+      // Pre-fill customer details if provided
+      if (widget.prefillName != null) {
+        _customerNameController.text = widget.prefillName!;
+      }
+      if (widget.prefillContact != null) {
+        _customerContactController.text = widget.prefillContact!;
+      }
     }
   }
 
@@ -128,7 +137,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
           receivedBy: _selectedReceivedBy ?? _receivedByOptions[0],
           writerAssigned: _writerAssignedController.text,
           pages: pages,
-          isCompleted: widget.order?.isCompleted ?? false, // Add this line
+          isCompleted: widget.order?.isCompleted ?? false,
         );
 
         int result;

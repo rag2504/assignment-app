@@ -12,7 +12,8 @@ class Order {
   String receivedBy;
   String writerAssigned;
   int pages;
-  bool isCompleted; // Change to bool
+  bool isCompleted; // Bool for completion status
+  String? details; // Added missing field 'details'
 
   Order({
     this.id,
@@ -28,7 +29,8 @@ class Order {
     required this.receivedBy,
     required this.writerAssigned,
     required this.pages,
-    required this.isCompleted, // Required named parameter
+    this.isCompleted = false, // Default value set to false
+    this.details, // Optional details field
   });
 
   Map<String, dynamic> toMap() {
@@ -46,7 +48,8 @@ class Order {
       'receivedBy': receivedBy,
       'writerAssigned': writerAssigned,
       'pages': pages,
-      'isCompleted': isCompleted ? 1 : 0, // Convert bool to int
+      'isCompleted': isCompleted ? 1 : 0, // Convert bool to int for DB
+      'details': details, // Added details to map
     };
   }
 
@@ -66,6 +69,7 @@ class Order {
       writerAssigned: map['writerAssigned'],
       pages: map['pages'],
       isCompleted: map['isCompleted'] == 1, // Convert int to bool
+      details: map['details'], // Map details field
     );
   }
 }
