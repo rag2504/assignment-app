@@ -20,6 +20,7 @@ class _ViewOrdersScreenState extends State<ViewOrdersScreen> {
   DateTime? endDate;
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat displayDateFormat = DateFormat('dd/MM/yyyy');
+  bool isLoading = true; // Add this line
 
   @override
   void initState() {
@@ -28,19 +29,41 @@ class _ViewOrdersScreenState extends State<ViewOrdersScreen> {
   }
 
   Future<void> _fetchOrders() async {
-    final dbHelper = DatabaseHelper();
-    final fetchedOrders = await dbHelper.getOrders();
-
-    // Sort orders by newest first (most recently added first)
-    fetchedOrders.sort((a, b) {
-      // Assuming higher ID means more recently added
-      return (b.id ?? 0).compareTo(a.id ?? 0);
-    });
-
     setState(() {
-      allOrders = fetchedOrders;
-      _applyFilters();
+      isLoading = true; // Show the progress bar
     });
+
+    try {
+      final dbHelper = DatabaseHelper();
+      final fetchedOrders = await dbHelper.getOrders();
+
+      // Sort orders by newest first (most recently added first)
+      fetchedOrders.sort((a, b) {
+        // Assuming higher ID means more recently added
+        return (b.id ?? 0).compareTo(a.id ?? 0);
+      });
+
+      setState(() {
+        allOrders = fetchedOrders;
+        _applyFilters();
+        isLoading = false; // Hide the progress bar
+      });
+
+      // Debugging print statements
+      print("Fetched orders: ${fetchedOrders.length}");
+      for (var order in fetchedOrders) {
+        print("Order ID: ${order.id}, Customer: ${order.customerName}");
+      }
+    } catch (e) {
+      print("Error fetching orders: $e");
+      // Optionally, show an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error fetching orders: $e"))
+      );
+      setState(() {
+        isLoading = false; // Hide the progress bar on error
+      });
+    }
   }
 
   void _applyFilters() {
@@ -402,324 +425,332 @@ class _ViewOrdersScreenState extends State<ViewOrdersScreen> {
             ),
           ),
 
-          // Improved Empty State
-          Expanded(
-            child: filteredOrders.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.assignment_late, size: 64, color: Colors.grey.shade500),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "No orders found",
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "Try changing your filters or add a new order",
-                    style: TextStyle(color: Colors.grey.shade600),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 16),
-                  if (searchQuery.isNotEmpty || selectedDateFilter != 'All')
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.restart_alt),
-                      label: Text("Clear Filters"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo.shade600,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          searchQuery = '';
-                          selectedDateFilter = 'All';
-                          _applyFilters();
-                        });
-                      },
-                    ),
-                ],
+          // Show progress bar while loading
+          if (isLoading)
+            Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
               ),
             )
-            // Redesigned Order List
-                : ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: filteredOrders.length,
-              itemBuilder: (context, index) {
-                final order = filteredOrders[index];
-                final bool isCompleted = order.isCompleted ?? false;
-                final bool isOverdue = _isOverdue(order.dueDate) && !isCompleted;
-
-                return Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.15),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: Offset(0, 3),
+          else
+          // Improved Empty State
+            Expanded(
+              child: filteredOrders.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                  ),
-                  child: Material(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    child: InkWell(
+                      child: Icon(Icons.assignment_late, size: 64, color: Colors.grey.shade500),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "No orders found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Try changing your filters or add a new order",
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16),
+                    if (searchQuery.isNotEmpty || selectedDateFilter != 'All')
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.restart_alt),
+                        label: Text("Clear Filters"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo.shade600,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            searchQuery = '';
+                            selectedDateFilter = 'All';
+                            _applyFilters();
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              )
+              // Redesigned Order List
+                  : ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                itemCount: filteredOrders.length,
+                itemBuilder: (context, index) {
+                  final order = filteredOrders[index];
+                  final bool isCompleted = order.isCompleted ?? false;
+                  final bool isOverdue = _isOverdue(order.dueDate) && !isCompleted;
+
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () => _viewOrderDetails(order),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: isCompleted ? Colors.green.shade50 : isOverdue ? Colors.red.shade50 : Colors.indigo.shade50,
-                                    borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.15),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => _viewOrderDetails(order),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      color: isCompleted ? Colors.green.shade50 : isOverdue ? Colors.red.shade50 : Colors.indigo.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      isCompleted ? Icons.check_circle : isOverdue ? Icons.error : Icons.assignment,
+                                      color: isCompleted ? Colors.green : isOverdue ? Colors.red : Colors.indigo,
+                                      size: 28,
+                                    ),
                                   ),
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    isCompleted ? Icons.check_circle : isOverdue ? Icons.error : Icons.assignment,
-                                    color: isCompleted ? Colors.green : isOverdue ? Colors.red : Colors.indigo,
-                                    size: 28,
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          order.customerName,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black.withOpacity(0.8),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          "${order.pages} pages",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isCompleted ? Colors.green.shade50 : isOverdue ? Colors.red.shade50 : Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isCompleted ? Colors.green.shade200 : isOverdue ? Colors.red.shade200 : Colors.orange.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isCompleted ? "Completed" : isOverdue ? "Overdue" : "In Progress",
+                                      style: TextStyle(
+                                        color: isCompleted ? Colors.green.shade800 : isOverdue ? Colors.red.shade800 : Colors.orange.shade800,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 14,
+                                          color: isOverdue ? Colors.red : Colors.grey,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          "Due: ${order.dueDate.isEmpty ? 'Not set' : _formatDueDate(order.dueDate)}",
+                                          style: TextStyle(
+                                            color: isOverdue ? Colors.red : Colors.grey.shade700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                                        SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            order.writerAssigned.isEmpty ? "No writer" : order.writerAssigned,
+                                            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              Divider(),
+                              SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        order.customerName,
+                                        "Total: ₹${order.totalAmount.toStringAsFixed(0)}",
                                         style: TextStyle(
-                                          fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.black.withOpacity(0.8),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        "${order.pages} pages",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey.shade700,
+                                          fontSize: 16,
+                                          color: Colors.indigo.shade800,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isCompleted ? Colors.green.shade50 : isOverdue ? Colors.red.shade50 : Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isCompleted ? Colors.green.shade200 : isOverdue ? Colors.red.shade200 : Colors.orange.shade200,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isCompleted ? "Completed" : isOverdue ? "Overdue" : "In Progress",
-                                    style: TextStyle(
-                                      color: isCompleted ? Colors.green.shade800 : isOverdue ? Colors.red.shade800 : Colors.orange.shade800,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        size: 14,
-                                        color: isOverdue ? Colors.red : Colors.grey,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "Due: ${order.dueDate.isEmpty ? 'Not set' : _formatDueDate(order.dueDate)}",
-                                        style: TextStyle(
-                                          color: isOverdue ? Colors.red : Colors.grey.shade700,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.person_outline, size: 14, color: Colors.grey),
-                                      SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          order.writerAssigned.isEmpty ? "No writer" : order.writerAssigned,
-                                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            Divider(),
-                            SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Total: ₹${order.totalAmount.toStringAsFixed(0)}",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.indigo.shade800,
-                                      ),
-                                    ),
-                                    if (order.balanceAmount > 0 && !isCompleted)
-                                      Text(
-                                        "Due: ₹${order.balanceAmount.toStringAsFixed(0)}",
-                                        style: TextStyle(
-                                          color: Colors.red.shade700,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    if (isCompleted)
-                                      Text(
-                                        "Fully Paid",
-                                        style: TextStyle(
-                                          color: Colors.green.shade700,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    // Status toggle button with improved design
-                                    if (!isCompleted)
-                                      ElevatedButton(
-                                        onPressed: () => _toggleOrderStatus(order, true),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green.shade100,
-                                          foregroundColor: Colors.green.shade800,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                      if (order.balanceAmount > 0 && !isCompleted)
+                                        Text(
+                                          "Due: ₹${order.balanceAmount.toStringAsFixed(0)}",
+                                          style: TextStyle(
+                                            color: Colors.red.shade700,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                         ),
-                                        child: Text(
-                                          "Mark Complete",
-                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    if (isCompleted)
-                                      OutlinedButton(
-                                        onPressed: () => _toggleOrderStatus(order, false),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.indigo.shade800,
-                                          side: BorderSide(color: Colors.indigo.shade200),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                      if (isCompleted)
+                                        Text(
+                                          "Fully Paid",
+                                          style: TextStyle(
+                                            color: Colors.green.shade700,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                         ),
-                                        child: Text(
-                                          "Reopen",
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      // Status toggle button with improved design
+                                      if (!isCompleted)
+                                        ElevatedButton(
+                                          onPressed: () => _toggleOrderStatus(order, true),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green.shade100,
+                                            foregroundColor: Colors.green.shade800,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          ),
+                                          child: Text(
+                                            "Mark Complete",
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                    SizedBox(width: 8),
-                                    // Actions menu
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: PopupMenuButton(
-                                        icon: Icon(Icons.more_vert, color: Colors.grey.shade700),
-                                        shape: RoundedRectangleBorder(
+                                      if (isCompleted)
+                                        OutlinedButton(
+                                          onPressed: () => _toggleOrderStatus(order, false),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.indigo.shade800,
+                                            side: BorderSide(color: Colors.indigo.shade200),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          ),
+                                          child: Text(
+                                            "Reopen",
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      SizedBox(width: 8),
+                                      // Actions menu
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        itemBuilder: (context) => [
-                                          PopupMenuItem(
-                                            value: 1,
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.edit, color: Colors.indigo),
-                                                SizedBox(width: 8),
-                                                Text("Edit Order"),
-                                              ],
-                                            ),
+                                        child: PopupMenuButton(
+                                          icon: Icon(Icons.more_vert, color: Colors.grey.shade700),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
-                                          PopupMenuItem(
-                                            value: 2,
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.delete, color: Colors.red),
-                                                SizedBox(width: 8),
-                                                Text("Delete Order"),
-                                              ],
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem(
+                                              value: 1,
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit, color: Colors.indigo),
+                                                  SizedBox(width: 8),
+                                                  Text("Edit Order"),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                        onSelected: (value) {
-                                          if (value == 1) {
-                                            _editOrder(order);
-                                          } else if (value == 2) {
-                                            _deleteOrder(order.id!);
-                                          }
-                                        },
+                                            PopupMenuItem(
+                                              value: 2,
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete, color: Colors.red),
+                                                  SizedBox(width: 8),
+                                                  Text("Delete Order"),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                          onSelected: (value) {
+                                            if (value == 1) {
+                                              _editOrder(order);
+                                            } else if (value == 2) {
+                                              _deleteOrder(order.id!);
+                                            }
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
