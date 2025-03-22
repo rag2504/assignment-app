@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,27 +6,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int totalOrders = 0;
-  double totalRevenue = 0.0;
-  int pendingOrders = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchFinancialData();
-  }
-
-  Future<void> _fetchFinancialData() async {
-    final dbHelper = DatabaseHelper();
-    final customers = await dbHelper.getCustomers(); // ✅ FIXED
-
-    setState(() {
-      totalOrders = customers.length;
-      totalRevenue = customers.fold(0, (sum, customer) => sum + customer.totalAmount); // ✅ FIXED
-      pendingOrders = customers.where((c) => c.balanceAmount > 0).length; // ✅ FIXED
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,58 +16,20 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatCard("Total Orders", totalOrders.toString(), Icons.assignment, Colors.blue),
-              _buildStatCard("Total Revenue", "₹$totalRevenue", Icons.attach_money, Colors.green),
-              _buildStatCard("Pending Orders", pendingOrders.toString(), Icons.pending, Colors.red),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildActionButton("Add Order", Icons.add_shopping_cart, Colors.purple, () {
+              Navigator.pushNamed(context, '/addOrder');
+            }),
 
-              SizedBox(height: 20),
+            SizedBox(height: 10),
 
-              _buildActionButton("Add Order", Icons.add_shopping_cart, Colors.purple, () {
-                Navigator.pushNamed(context, '/addOrder');
-              }),
-
-              SizedBox(height: 10),
-
-              _buildActionButton("View Orders", Icons.view_list, Colors.blue, () {
-                Navigator.pushNamed(context, '/viewOrders');
-              }),
-
-              SizedBox(height: 10),
-
-              _buildActionButton("Financial Details", Icons.bar_chart, Colors.orange, () {
-                Navigator.pushNamed(context, '/financialDetails');
-              }),
-
-              SizedBox(height: 10),
-
-              _buildActionButton("Writer Details", Icons.edit, Colors.teal, () {
-                Navigator.pushNamed(context, '/writerDetails');
-              }),
-
-              SizedBox(height: 10),
-
-              _buildActionButton("Add Customer", Icons.person_add, Colors.purple, () {
-                Navigator.pushNamed(context, '/addCustomer');
-              }),
-            ],
-          ),
+            _buildActionButton("View Orders", Icons.view_list, Colors.blue, () {
+              Navigator.pushNamed(context, '/viewOrders');
+            }),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 30),
-        title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        subtitle: Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
       ),
     );
   }
