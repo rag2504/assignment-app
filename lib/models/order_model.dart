@@ -11,8 +11,8 @@ class Order {
   String paymentMode;
   String receivedBy;
   String writerAssigned;
-  int pages;// Added Pages field
-  int isCompleted;
+  int pages;
+  bool isCompleted; // Change to bool
 
   Order({
     this.id,
@@ -27,8 +27,8 @@ class Order {
     required this.paymentMode,
     required this.receivedBy,
     required this.writerAssigned,
-    required this.pages, // Added Pages field
-    required this.isCompleted,
+    required this.pages,
+    required this.isCompleted, // Required named parameter
   });
 
   Map<String, dynamic> toMap() {
@@ -45,7 +45,8 @@ class Order {
       'paymentMode': paymentMode,
       'receivedBy': receivedBy,
       'writerAssigned': writerAssigned,
-      'pages': pages, // Added Pages field
+      'pages': pages,
+      'isCompleted': isCompleted ? 1 : 0, // Convert bool to int
     };
   }
 
@@ -63,8 +64,8 @@ class Order {
       paymentMode: map['paymentMode'],
       receivedBy: map['receivedBy'],
       writerAssigned: map['writerAssigned'],
-      pages: map['pages'], // Added Pages field
-      isCompleted: map['isCompleted'],
+      pages: map['pages'],
+      isCompleted: map['isCompleted'] == 1, // Convert int to bool
     );
   }
 }

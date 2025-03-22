@@ -128,6 +128,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
           receivedBy: _selectedReceivedBy ?? _receivedByOptions[0],
           writerAssigned: _writerAssignedController.text,
           pages: pages,
+          isCompleted: widget.order?.isCompleted ?? false, // Add this line
         );
 
         int result;
