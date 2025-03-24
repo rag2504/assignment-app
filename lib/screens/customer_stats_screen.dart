@@ -28,45 +28,62 @@ class _CustomerStatsScreenState extends State<CustomerStatsScreen> {
       isLoading = true;
     });
 
-    final dbHelper = DatabaseHelper();
-    final orders = await dbHelper.getOrders();
-    Map<String, CustomerStats> statsMap = {};
+    try {
+      final dbHelper = DatabaseHelper();
+      final orders = await dbHelper.getOrders();
+      Map<String, CustomerStats> statsMap = {};
 
-    for (var order in orders) {
-      if (statsMap.containsKey(order.customerName)) {
-        statsMap[order.customerName]!.orderCount++;
-        statsMap[order.customerName]!.orders.add(order);
-        statsMap[order.customerName]!.totalAmount += order.totalAmount;
+      for (var order in orders) {
+        print('Processing order: ${order.toMap()}');  // Log each order
 
-        // Check for the most recent order
-        DateTime orderDate = DateTime.parse(order.orderDate);
-        DateTime latestDate = DateTime.parse(statsMap[order.customerName]!.lastOrderDate);
-        if (orderDate.isAfter(latestDate)) {
-          statsMap[order.customerName]!.lastOrderDate = order.orderDate;
+        if (statsMap.containsKey(order.customerName)) {
+          statsMap[order.customerName]!.orderCount++;
+          statsMap[order.customerName]!.orders.add(order);
+          statsMap[order.customerName]!.totalAmount += order.totalAmount;
+
+          // Check for the most recent order
+          DateTime? orderDate = _parseDate(order.orderDate);
+          DateTime? latestDate = _parseDate(statsMap[order.customerName]!.lastOrderDate);
+          if (orderDate != null && latestDate != null && orderDate.isAfter(latestDate)) {
+            statsMap[order.customerName]!.lastOrderDate = order.orderDate;
+          }
+
+          // Check if any order is incomplete
+          if (!(order.isCompleted ?? true)) {
+            statsMap[order.customerName]!.hasActiveOrders = true;
+          }
+        } else {
+          statsMap[order.customerName] = CustomerStats(
+            customerName: order.customerName,
+            customerContact: order.customerContact,
+            orderCount: 1,
+            totalAmount: order.totalAmount,
+            orders: [order],
+            lastOrderDate: order.orderDate,
+            hasActiveOrders: !(order.isCompleted ?? true),
+          );
         }
-
-        // Check if any order is incomplete
-        if (!(order.isCompleted ?? true)) {
-          statsMap[order.customerName]!.hasActiveOrders = true;
-        }
-      } else {
-        statsMap[order.customerName] = CustomerStats(
-          customerName: order.customerName,
-          customerContact: order.customerContact,
-          orderCount: 1,
-          totalAmount: order.totalAmount,
-          orders: [order],
-          lastOrderDate: order.orderDate,
-          hasActiveOrders: !(order.isCompleted ?? true),
-        );
       }
-    }
 
-    setState(() {
-      allCustomerStats = statsMap.values.toList();
-      _applySortAndFilter();
-      isLoading = false;
-    });
+      setState(() {
+        allCustomerStats = statsMap.values.toList();
+        _applySortAndFilter();
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching customer stats: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  DateTime? _parseDate(String dateStr) {
+    try {
+      return DateTime.parse(dateStr);
+    } catch (e) {
+      return null;
+    }
   }
 
   void _applySortAndFilter() {
@@ -96,9 +113,13 @@ class _CustomerStatsScreenState extends State<CustomerStatsScreen> {
         break;
       case 'Most Recent':
         result.sort((a, b) {
-          DateTime dateA = DateTime.parse(a.lastOrderDate);
-          DateTime dateB = DateTime.parse(b.lastOrderDate);
-          return dateB.compareTo(dateA);
+          DateTime? dateA = _parseDate(a.lastOrderDate);
+          DateTime? dateB = _parseDate(b.lastOrderDate);
+          if (dateA != null && dateB != null) {
+            return dateB.compareTo(dateA);
+          } else {
+            return 0;
+          }
         });
         break;
     }
@@ -154,10 +175,10 @@ class _CustomerStatsScreenState extends State<CustomerStatsScreen> {
   }
 
   String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
+    DateTime? date = _parseDate(dateStr);
+    if (date != null) {
       return DateFormat('dd/MM/yyyy').format(date);
-    } catch (e) {
+    } else {
       return 'N/A';
     }
   }

@@ -54,20 +54,40 @@ class Order {
   }
 
   factory Order.fromMap(Map<String, dynamic> map) {
+    double parseDouble(dynamic value) {
+      if (value is String && value.isNotEmpty) {
+        return double.tryParse(value) ?? 0.0;
+      } else if (value is double) {
+        return value;
+      } else {
+        return 0.0;
+      }
+    }
+
+    int parseInt(dynamic value) {
+      if (value is String && value.isNotEmpty) {
+        return int.tryParse(value) ?? 0;
+      } else if (value is int) {
+        return value;
+      } else {
+        return 0;
+      }
+    }
+
     return Order(
       id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
-      orderDate: map['orderDate'],
-      dueDate: map['dueDate'],
-      customerName: map['customerName'],
-      customerContact: map['customerContact'],
-      projectType: map['projectType'],
-      totalAmount: (map['totalAmount'] is String) ? double.parse(map['totalAmount']) : map['totalAmount'].toDouble(),
-      advancePaid: (map['advancePaid'] is String) ? double.parse(map['advancePaid']) : map['advancePaid'].toDouble(),
-      balanceAmount: (map['balanceAmount'] is String) ? double.parse(map['balanceAmount']) : map['balanceAmount'].toDouble(),
-      paymentMode: map['paymentMode'],
-      receivedBy: map['receivedBy'],
-      writerAssigned: map['writerAssigned'],
-      pages: (map['pages'] is String) ? int.parse(map['pages']) : map['pages'],
+      orderDate: map['orderDate'] ?? '',
+      dueDate: map['dueDate'] ?? '',
+      customerName: map['customerName'] ?? '',
+      customerContact: map['customerContact'] ?? '',
+      projectType: map['projectType'] ?? '',
+      totalAmount: parseDouble(map['totalAmount']),
+      advancePaid: parseDouble(map['advancePaid']),
+      balanceAmount: parseDouble(map['balanceAmount']),
+      paymentMode: map['paymentMode'] ?? '',
+      receivedBy: map['receivedBy'] ?? '',
+      writerAssigned: map['writerAssigned'] ?? '',
+      pages: parseInt(map['pages']),
       isCompleted: map['isCompleted'] == 1 || map['isCompleted'] == true,
       details: map['details'],
     );
